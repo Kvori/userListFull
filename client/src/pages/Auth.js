@@ -1,10 +1,4 @@
-import {
-    Container,
-    Form,
-    Button,
-    Nav,
-    Card,
-} from 'react-bootstrap'
+import { Container, Form, Button, Nav, Card } from 'react-bootstrap'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import {
     LOGIN_ROUTE,
@@ -17,6 +11,7 @@ import { Context } from '../index.js'
 import { useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
+import CustomButton from '../components/CustomButton.js'
 
 const getSchema = (isRegister) =>
     yup.object().shape({
@@ -50,6 +45,7 @@ const Auth = () => {
 
     const location = useLocation()
     const isRegister = location.pathname === REGISTRATION_ROUTE
+    const [isLoading, setIsLoading] = useState(false)
 
     const schema = getSchema(isRegister)
     const {
@@ -64,6 +60,7 @@ const Auth = () => {
 
     const onSubmit = async ({ email, password, name }) => {
         setServerError('')
+        setIsLoading(true) // ⏳ включаем лоадер
         try {
             const data = isRegister
                 ? await registration(email, name, password)
@@ -72,19 +69,25 @@ const Auth = () => {
             user.setUser(data)
             user.setIsAuth(true)
             navigate(USERLIST_ROUTE)
-
         } catch (e) {
-            if (e.response?.data.message) return setServerError(e.response.data.message)
+            if (e.response?.data.message) {
+                return setServerError(e.response.data.message)
+            }
             error.setShowError(true)
             error.setError(e.message)
+        } finally {
+            setIsLoading(false) // ✅ выключаем лоадер
         }
     }
 
     return (
-        <Container className="d-flex align-items-center" style={{ maxWidth: '500px', marginTop: "2rem", minHeight: "80vh" }}>
-            <Card className='p-4 w-100'>
+        <Container
+            className="d-flex align-items-center"
+            style={{ maxWidth: '500px', marginTop: '2rem', minHeight: '80vh' }}
+        >
+            <Card className="p-4 w-100">
                 <h2 className="d-flex justify-content-center mb-5">
-                    {isRegister ? "Регистрация" : "Авторизация"}
+                    {isRegister ? 'Регистрация' : 'Авторизация'}
                 </h2>
                 <Form onSubmit={handleSubmit(onSubmit)}>
                     {isRegister && (
@@ -151,15 +154,23 @@ const Auth = () => {
                             {serverError}
                         </p>
                     )}
-
-                    <Button variant="primary" type="submit" className="w-100 mb-3">
+                    <CustomButton
+                        variant="primary"
+                        type="submit"
+                        className="w-100 mb-3"
+                        isLoading={isLoading}
+                    >
                         {isRegister ? 'Зарегистрироваться' : 'Войти'}
-                    </Button>
+                    </CustomButton>
                 </Form>
                 {isRegister ? (
                     <div className="d-flex justify-content-center">
                         <div>Если у вас есть аккаунт,&nbsp;</div>
-                        <Nav.Link className="link-info" as={Link} to={LOGIN_ROUTE}>
+                        <Nav.Link
+                            className="link-info"
+                            as={Link}
+                            to={LOGIN_ROUTE}
+                        >
                             войдите
                         </Nav.Link>
                     </div>
